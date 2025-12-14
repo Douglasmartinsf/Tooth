@@ -9,7 +9,8 @@ DEBUG = True
 ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
-    '192.168.0.10',
+    '200.132.35.11',
+    '*',
 ]
 
 # APPS ESSENCIAIS

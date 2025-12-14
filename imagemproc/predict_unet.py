@@ -93,7 +93,11 @@ def label_mask_to_bbox(mask: np.ndarray):
     return bbox_dict
 
 @torch.no_grad()
-def main(file_path):
+def main(file_bytes):
+
+    if file_bytes is None or len(file_bytes) == 0:
+        raise ValueError("file_bytes vazio")
+
     cuda = False#torch.cuda.is_available() 
 
     #model = load_unet("output_unet_enum9_08-11_07-27/last_epoch.pth", 33, cuda=cuda)
@@ -103,8 +107,10 @@ def main(file_path):
 
     predictor = SegmentationPredictor(model, cuda=cuda)
 
-    file_bytes = np.frombuffer(file_path.read(), np.uint8)
+#    file_bytes = np.frombuffer(file_path.read(), np.uint8)
     image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
+    if image is None:
+        raise ValueError("Deu xabu ao decodificar a imagem")
 #    image = cv2.imread(file_path)
     #cv2.imshow('image', image)
     #cv2.waitKey(0)
