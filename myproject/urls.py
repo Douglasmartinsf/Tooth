@@ -16,10 +16,16 @@
 #    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('accounts/', include('allauth.urls')),
     path('', include('imagemproc.urls')),
 ]
+
+# Adicionar rota de desenvolvimento apenas quando DEBUG=True
+if settings.DEBUG:
+    from imagemproc.dev_views import dev_login
+    urlpatterns.append(path('dev-login/', dev_login, name='dev_login'))
 
