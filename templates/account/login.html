@@ -3,66 +3,75 @@
 
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-    <meta charset="UTF-8">
-    <title>Login | Tooth - UFSM</title>
-    <style>
-        body {
-            background-color: #0055A2; /* Azul UFSM */
-            font-family: Arial, sans-serif;
-        }
-        .login-box {
-            background: white;
-            width: 400px;
-            margin: 10% auto;
-            padding: 30px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .login-box img {
-            width: 120px;
-            margin-bottom: 20px;
-        }
-	.btn-google {
-	    display: flex;
-	    align-items: center;
-	    justify-content: center;
-	    gap: 10px;
-	    background: #ffffff;
-	    color: #444;
-	    padding: 12px;
-	    border-radius: 4px;
-	    text-decoration: none;
-	    font-weight: bold;
-	    border: 1px solid #ddd;
-	    transition: background 0.2s ease;
-	}
+	<meta charset="UTF-8">
+	<title>Login | Tooth - UFSM</title>
+	<style>
+		body {
+			background-color: #0055A2;
+			/* Azul UFSM */
+			font-family: Arial, sans-serif;
+		}
 
-	.btn-google:hover {
-	    background: #f5f5f5;
-	}
+		.login-box {
+			background: white;
+			width: 400px;
+			margin: 10% auto;
+			padding: 30px;
+			border-radius: 8px;
+			text-align: center;
+		}
 
-	.google-icon {
-	    width: 25px;
-	    height: 25px;
-	    object-fit: contain;
-	}
-    </style>
+		.login-box img {
+			width: 120px;
+			margin-bottom: 20px;
+		}
+
+		.btn-google {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			background: #ffffff;
+			color: #444;
+			padding: 12px;
+			border-radius: 4px;
+			text-decoration: none;
+			font-weight: bold;
+			border: 1px solid #ddd;
+			transition: background 0.2s ease;
+		}
+
+		.btn-google:hover {
+			background: #f5f5f5;
+		}
+
+		.google-icon {
+			width: 25px;
+			height: 25px;
+			object-fit: contain;
+		}
+	</style>
 </head>
+
 <body>
-    <div class="login-box">
-	<img src="/static/ufsm_logo.png" alt="UFSM">
-        <img src="/static/ct_logo.png" alt="CT">
-        <img src="/static/ccs_logo.png" alt="CCS">
+	<div class="login-box">
+		<img src="/static/ufsm_logo.png" alt="UFSM">
+		<img src="/static/ct_logo.png" alt="CT">
+		<img src="/static/ccs_logo.png" alt="CCS">
 
-        <h2>Tooth – OdontoAI</h2>
-        <p>Acesso restrito a usuários autorizados</p>
+		<h2>Tooth – OdontoAI</h2>
+		<p>O Tooth é uma ferramenta educacional desenvolvida para apoiar o ensino e a aprendizagem em Odontologia,
+			oferecendo recursos de análise de imagens radiográficas de forma segura, ética e voltada para estudantes e
+			profissionais em formação.</p>
+		<p>Acesso restrito a usuários autorizados</p>
 
-    	<a class="btn-google" href="{% provider_login_url 'google' %}">
-	    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
-    		Entrar com Google
-	</a>
-    </div>
+		<a class="btn-google" href="{% provider_login_url 'google' %}">
+			<img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" class="google-icon">
+			Entrar com Google
+		</a>
+	</div>
 </body>
-</html>
 
+</html>
