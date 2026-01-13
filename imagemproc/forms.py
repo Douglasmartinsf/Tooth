@@ -15,7 +15,7 @@ class ImageUploadForm(forms.Form):
             
             if ext not in valid_extensions:
                 raise ValidationError(
-                    f'Formato de arquivo inválido. Formatos aceitos: {', '.join(valid_extensions)}'
+                    f"Formato de arquivo inválido. Formatos aceitos: {', '.join(valid_extensions)}"
                 )
             
             # Verificar tamanho do arquivo (máximo 10MB)

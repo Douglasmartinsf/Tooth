@@ -183,6 +183,21 @@
         .error-list li {
             margin-bottom: 8px;
         }
+
+        .file-error {
+            display: none;
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #c33;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+
+        .file-error.show {
+            display: block;
+        }
     </style>
 </head>
 
@@ -246,6 +261,7 @@
                                     alterar</div>
                             </label>
                             {{ form.image }}
+                            <div class="file-error" id="fileError"></div>
                         </div>
 
                         <button class="btn btn-primary btn-lg btn-primary-custom w-100">
@@ -261,15 +277,75 @@
                         const changeFileText = document.getElementById('changeFileText');
                         const uploadForm = document.getElementById('uploadForm');
                         const loadingOverlay = document.getElementById('loadingOverlay');
+                        const fileError = document.getElementById('fileError');
+
+                        const validExtensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif'];
+                        const maxFileSize = 10 * 1024 * 1024; // 10MB
+
+                        function showError(message) {
+                            fileError.textContent = '⚠️ ' + message;
+                            fileError.classList.add('show');
+                            uploadLabel.style.borderColor = '#c33';
+                            uploadLabel.style.background = '#fee';
+                        }
+
+                        function clearError() {
+                            fileError.classList.remove('show');
+                            fileError.textContent = '';
+                        }
+
+                        function validateFile(file) {
+                            clearError();
+
+                            if (!file) return false;
+
+                            // Validar extensão
+                            const fileName = file.name.toLowerCase();
+                            const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+                            
+                            if (!hasValidExtension) {
+                                showError('Formato de arquivo inválido. Formatos aceitos: ' + validExtensions.join(', '));
+                                fileInput.value = '';
+                                return false;
+                            }
+
+                            // Validar tamanho
+                            if (file.size > maxFileSize) {
+                                showError('O arquivo é muito grande. Tamanho máximo: 10MB');
+                                fileInput.value = '';
+                                return false;
+                            }
+
+                            // Validar tipo MIME
+                            if (!file.type.startsWith('image/')) {
+                                showError('O arquivo selecionado não é uma imagem válida');
+                                fileInput.value = '';
+                                return false;
+                            }
+
+                            return true;
+                        }
 
                         // Mostrar loading ao submeter form
                         uploadForm.addEventListener('submit', function (e) {
                             if (fileInput.files && fileInput.files[0]) {
+                                if (!validateFile(fileInput.files[0])) {
+                                    e.preventDefault();
+                                    return false;
+                                }
                                 loadingOverlay.classList.add('show');
                             }
                         });
 
                         function handleFileSelect(file) {
+                            if (!validateFile(file)) {
+                                imagePreview.classList.remove('show');
+                                fileNameDisplay.classList.remove('show');
+                                changeFileText.classList.remove('show');
+                                uploadLabel.classList.remove('has-file');
+                                return;
+                            }
+
                             if (file && file.type.startsWith('image/')) {
                                 const reader = new FileReader();
                                 reader.onload = function (e) {
