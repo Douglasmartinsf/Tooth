@@ -69,12 +69,51 @@
         }
 
         footer {
-            padding: 20px;
+            padding: 15px 20px;
             background: #003366;
             color: white;
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px;
+        }
+
+        .footer-logos {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            padding-right: 25px;
+            border-right: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .footer-logos img {
+            max-height: 70px;
+            filter: brightness(0) invert(1);
+            opacity: 0.85;
+            transition: opacity 0.2s ease;
+        }
+
+        .footer-logos img.logo-middle {
+            max-height: 50px;
+        }
+
+        .footer-logos img:hover {
+            opacity: 1;
+        }
+
+        .footer-text {
+            opacity: 0.8;
+            font-size: 0.8rem;
+            text-align: left;
+            padding-left: 0;
         }
 
         .user-header {
@@ -242,6 +281,49 @@
             display: block;
         }
 
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 51, 102, 0.95);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        .loading-subtext {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+
         .btn-back {
             display: inline-flex;
             align-items: center;
@@ -249,14 +331,13 @@
             color: #0055A2;
             text-decoration: none;
             font-weight: 500;
-            padding: 10px 20px;
-            border-radius: 6px;
+            font-size: 0.9rem;
+            padding: 0;
             transition: all 0.2s ease;
             margin-bottom: 20px;
         }
 
         .btn-back:hover {
-            background: #f0f7ff;
             color: #003d75;
             transform: translateX(-3px);
         }
@@ -265,8 +346,16 @@
 
 <body>
 
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processando imagem...</div>
+        <div class="loading-subtext">Aguarde enquanto analisamos sua radiografia</div>
+    </div>
+
     <nav class="navbar">
-        <span class="navbar-brand">UFSM — Tooth is not an Odontological Object Tagging Hub </span>
+        <a href="{% url 'imagemproc:home' %}" class="navbar-brand" style="text-decoration: none;">
+            UFSM — Tooth is not an Odontological Object Tagging Hub
+        </a>
         {% include "partials/user_header.html" %}
     </nav>
 
@@ -274,14 +363,15 @@
 
         <div class="row justify-content-center">
             <div class="col-lg-6">
-                <a href="{% url 'imagemproc:home' %}" class="btn-back">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 12H5M12 19l-7-7 7-7"/>
-                    </svg>
-                    Voltar para início
-                </a>
                 
                 <div class="card">
+                    <a href="{% url 'imagemproc:home' %}" class="btn-back">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 12H5M12 19l-7-7 7-7" />
+                        </svg>
+                        Voltar para início
+                    </a>
 
                     <h4 class="text-center mb-4">Envie sua radiografia panorâmica</h4>
 
@@ -319,6 +409,15 @@
                         const uploadLabel = document.getElementById('uploadLabel');
                         const imagePreview = document.getElementById('imagePreview');
                         const changeFileText = document.getElementById('changeFileText');
+                        const uploadForm = document.getElementById('uploadForm');
+                        const loadingOverlay = document.getElementById('loadingOverlay');
+
+                        // Mostrar loading ao submeter form
+                        uploadForm.addEventListener('submit', function(e) {
+                            if (fileInput.files && fileInput.files[0]) {
+                                loadingOverlay.classList.add('show');
+                            }
+                        });
 
                         function handleFileSelect(file) {
                             if (file && file.type.startsWith('image/')) {
@@ -377,7 +476,16 @@
     </div>
 
     <footer>
-        Universidade Federal de Santa Maria — Centro de Tecnologia • Centro de Ciências da Saúde
+        <div class="footer-content">
+            <div class="footer-logos">
+                <img src="/static/UFSM_principal_cor.png" alt="UFSM" onerror="this.src='/static/ufsm_logo.png'">
+                <img src="/static/ct_logo.png" alt="Centro de Tecnologia" class="logo-middle">
+                <img src="/static/ccs_logo.png" alt="Centro de Ciências da Saúde">
+            </div>
+            <div class="footer-text">
+                Universidade Federal de Santa Maria — Centro de Tecnologia • Centro de Ciências da Saúde
+            </div>
+        </div>
     </footer>
 
 </body>
