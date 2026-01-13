@@ -204,6 +204,16 @@
             width: 20px;
             height: 20px;
         }
+
+        .btn-process {
+            transition: all 0.2s ease;
+        }
+
+        .btn-process:hover {
+            background: #004080 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 89, 166, 0.3);
+        }
     </style>
 </head>
 
@@ -227,6 +237,11 @@
                     <img src="{{ obj.result.url }}" class="result-img mb-4">
 
                     <div class="d-flex gap-3">
+                        <a href="{% url 'imagemproc:upload_save' %}" class="btn btn-primary flex-fill btn-lg btn-process"
+                            style="background:#0059a6;">
+                            Processar outra imagem
+                        </a>
+
                         <a href="{{ obj.result.url }}" download="resultado_analise_tooth.png"
                             class="btn-download flex-fill">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -235,11 +250,6 @@
                                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             Baixar Imagem
-                        </a>
-
-                        <a href="{% url 'imagemproc:upload_save' %}" class="btn btn-primary flex-fill btn-lg"
-                            style="background:#0059a6;">
-                            Processar outra imagem
                         </a>
                     </div>
 
