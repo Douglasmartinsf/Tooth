@@ -1,18 +1,24 @@
 import numpy as np
+import cv2
 from django.shortcuts import render
 from django.core.files.base import ContentFile
+from django.contrib.auth.decorators import login_required
 from .forms import ImageUploadForm
 from .models import Upload
-from io import BytesIO
-import cv2
 from .predict_unet import main
-from django.contrib.auth.decorators import login_required
+from .constants import VALID_IMAGE_EXTENSIONS, MAX_FILE_SIZE_MB
 
 
 @login_required
 def home(request):
-    """Página inicial com informações introdutórias"""
+    """Página inicial com informações introduútórias"""
     return render(request, 'imagemproc/home.html')
+
+
+def _render_upload_error(request, form, error_message):
+    """Helper para renderizar upload com erro"""
+    form.add_error('image', error_message)
+    return render(request, 'imagemproc/upload.html', {'form': form})
 
 
 @login_required
@@ -23,46 +29,39 @@ def upload_and_process_save(request):
         if form.is_valid():
             try:
                 uploaded = form.cleaned_data['image']
-
-                # 🔥 GARANTIA ABSOLUTA: reposiciona o ponteiro
                 uploaded.seek(0)
-
                 file_bytes = uploaded.read()
 
                 if not file_bytes:
-                    form.add_error('image', 'Arquivo de imagem vazio ou corrompido')
-                    return render(request, 'imagemproc/upload.html', {'form': form})
+                    return _render_upload_error(request, form, 'Arquivo de imagem vazio ou corrompido')
 
                 np_bytes = np.frombuffer(file_bytes, dtype=np.uint8)
-                
-                # Tentar decodificar a imagem para verificar se é válida
                 test_img = cv2.imdecode(np_bytes, cv2.IMREAD_COLOR)
+                
                 if test_img is None:
-                    form.add_error('image', 'Não foi possível processar a imagem. Verifique se o arquivo não está corrompido.')
-                    return render(request, 'imagemproc/upload.html', {'form': form})
+                    return _render_upload_error(
+                        request, form,
+                        'Não foi possível processar a imagem. Verifique se o arquivo não está corrompido.'
+                    )
 
                 outimage = main(np_bytes)
-
                 obj = Upload.objects.create(original=uploaded)
 
                 ok, buffer = cv2.imencode('.png', outimage)
                 if not ok:
-                    form.add_error('image', 'Erro ao processar a imagem. Tente novamente.')
-                    return render(request, 'imagemproc/upload.html', {'form': form})
+                    return _render_upload_error(request, form, 'Erro ao processar a imagem. Tente novamente.')
 
-                obj.result.save(
-                    f"result_{obj.id}.png",
-                    ContentFile(buffer.tobytes()),
-                    save=True
-                )
-
+                obj.result.save(f"result_{obj.id}.png", ContentFile(buffer.tobytes()), save=True)
                 return render(request, 'imagemproc/result.html', {'obj': obj})
-            
-            except Exception as e:
-                form.add_error('image', f'Erro ao processar a imagem: {str(e)}')
-                return render(request, 'imagemproc/upload.html', {'form': form})
 
+            except Exception as e:
+                return _render_upload_error(request, form, f'Erro ao processar a imagem: {str(e)}')
     else:
         form = ImageUploadForm()
 
-    return render(request, 'imagemproc/upload.html', {'form': form})
+    context = {
+        'form': form,
+        'valid_extensions': VALID_IMAGE_EXTENSIONS,
+        'max_file_size_mb': MAX_FILE_SIZE_MB,
+    }
+    return render(request, 'imagemproc/upload.html', context)

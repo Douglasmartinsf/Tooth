@@ -229,12 +229,12 @@
                         <strong>⚠️ Erro no envio:</strong>
                         <ul class="error-list">
                             {% for field in form %}
-                                {% for error in field.errors %}
-                                    <li>{{ error }}</li>
-                                {% endfor %}
+                            {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                            {% endfor %}
                             {% endfor %}
                             {% for error in form.non_field_errors %}
-                                <li>{{ error }}</li>
+                            <li>{{ error }}</li>
                             {% endfor %}
                         </ul>
                     </div>
@@ -279,8 +279,8 @@
                         const loadingOverlay = document.getElementById('loadingOverlay');
                         const fileError = document.getElementById('fileError');
 
-                        const validExtensions = ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif'];
-                        const maxFileSize = 10 * 1024 * 1024; // 10MB
+                        const validExtensions = {{ valid_extensions|safe }};
+                        const maxFileSize = {{ max_file_size_mb }} * 1024 * 1024;
 
                         function showError(message) {
                             fileError.textContent = '⚠️ ' + message;
@@ -302,7 +302,7 @@
                             // Validar extensão
                             const fileName = file.name.toLowerCase();
                             const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
-                            
+
                             if (!hasValidExtension) {
                                 showError('Formato de arquivo inválido. Formatos aceitos: ' + validExtensions.join(', '));
                                 fileInput.value = '';
@@ -346,22 +346,20 @@
                                 return;
                             }
 
-                            if (file && file.type.startsWith('image/')) {
-                                const reader = new FileReader();
-                                reader.onload = function (e) {
-                                    imagePreview.src = e.target.result;
-                                    imagePreview.classList.add('show');
-                                    fileNameDisplay.textContent = '📷 ' + file.name;
-                                    fileNameDisplay.classList.add('show');
-                                    changeFileText.classList.add('show');
-                                    uploadLabel.classList.add('has-file');
-                                    
-                                    // Restaurar estilo de sucesso
-                                    uploadLabel.style.borderColor = '#28a745';
-                                    uploadLabel.style.background = '#f0fdf4';
-                                };
-                                reader.readAsDataURL(file);
-                            }
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                imagePreview.src = e.target.result;
+                                imagePreview.classList.add('show');
+                                fileNameDisplay.textContent = '📷 ' + file.name;
+                                fileNameDisplay.classList.add('show');
+                                changeFileText.classList.add('show');
+                                uploadLabel.classList.add('has-file');
+
+                                // Restaurar estilo de sucesso
+                                uploadLabel.style.borderColor = '#28a745';
+                                uploadLabel.style.background = '#f0fdf4';
+                            };
+                            reader.readAsDataURL(file);
                         }
 
                         fileInput.addEventListener('change', function (e) {
