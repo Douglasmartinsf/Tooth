@@ -163,6 +163,26 @@
             color: rgba(255, 255, 255, 0.8);
             font-size: 0.9rem;
         }
+
+        .error-message {
+            background: #fee;
+            border: 1px solid #fcc;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #c33;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .error-list {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .error-list li {
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 
@@ -188,6 +208,22 @@
 
                 <div class="card">
                     <h4 class="text-center mb-4">Envie sua radiografia panorâmica</h4>
+
+                    {% if form.errors %}
+                    <div class="error-message">
+                        <strong>⚠️ Erro no envio:</strong>
+                        <ul class="error-list">
+                            {% for field in form %}
+                                {% for error in field.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            {% endfor %}
+                            {% for error in form.non_field_errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
 
                     <form action="{% url 'imagemproc:upload_save' %}" method="POST" enctype="multipart/form-data"
                         id="uploadForm">
