@@ -173,6 +173,34 @@
             transform: translateY(-1px);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
+        .btn-download {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            margin-bottom: 15px;
+        }
+
+        .btn-download:hover {
+            background: #218838;
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-download svg {
+            width: 20px;
+            height: 20px;
+        }
     </style>
 </head>
 
@@ -195,9 +223,18 @@
 
                 <img src="{{ obj.result.url }}" class="result-img mb-4">
 
-                <a href="{% url 'imagemproc:upload_save' %}" class="btn btn-primary w-100 btn-lg" style="background:#0059a6;">
-                    Processar outra imagem
-                </a>
+                <div class="d-grid gap-2">
+                    <a href="{{ obj.result.url }}" download="resultado_analise_tooth.png" class="btn-download w-100 text-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Baixar Imagem Processada
+                    </a>
+
+                    <a href="{% url 'imagemproc:upload_save' %}" class="btn btn-primary w-100 btn-lg" style="background:#0059a6;">
+                        Processar outra imagem
+                    </a>
+                </div>
 
             </div>
         </div>
