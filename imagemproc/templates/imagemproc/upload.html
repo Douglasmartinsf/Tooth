@@ -279,7 +279,7 @@
                         const loadingOverlay = document.getElementById('loadingOverlay');
                         const fileError = document.getElementById('fileError');
 
-                        const validExtensions = {{ valid_extensions|safe }};
+                        const validExtensions = {{ valid_extensions| safe }};
                         const maxFileSize = {{ max_file_size_mb }} * 1024 * 1024;
 
                         function showError(message) {
@@ -368,6 +368,13 @@
                             }
                         });
 
+                        // Função auxiliar para resetar estilos do upload
+                        function resetUploadStyle() {
+                            const hasFile = uploadLabel.classList.contains('has-file');
+                            uploadLabel.style.borderColor = hasFile ? '#28a745' : '#0055A2';
+                            uploadLabel.style.background = hasFile ? '#f0fdf4' : '#f8fbff';
+                        }
+
                         // Drag and drop
                         uploadLabel.addEventListener('dragover', function (e) {
                             e.preventDefault();
@@ -380,15 +387,13 @@
                         uploadLabel.addEventListener('dragleave', function (e) {
                             e.preventDefault();
                             if (!this.classList.contains('has-file')) {
-                                this.style.borderColor = '#0055A2';
-                                this.style.background = '#f8fbff';
+                                resetUploadStyle();
                             }
                         });
 
                         uploadLabel.addEventListener('drop', function (e) {
                             e.preventDefault();
-                            this.style.borderColor = this.classList.contains('has-file') ? '#28a745' : '#0055A2';
-                            this.style.background = this.classList.contains('has-file') ? '#f0fdf4' : '#f8fbff';
+                            resetUploadStyle();
 
                             if (e.dataTransfer.files.length) {
                                 fileInput.files = e.dataTransfer.files;
