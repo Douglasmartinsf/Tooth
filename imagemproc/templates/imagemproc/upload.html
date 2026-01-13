@@ -355,6 +355,10 @@
                                     fileNameDisplay.classList.add('show');
                                     changeFileText.classList.add('show');
                                     uploadLabel.classList.add('has-file');
+                                    
+                                    // Restaurar estilo de sucesso
+                                    uploadLabel.style.borderColor = '#28a745';
+                                    uploadLabel.style.background = '#f0fdf4';
                                 };
                                 reader.readAsDataURL(file);
                             }
