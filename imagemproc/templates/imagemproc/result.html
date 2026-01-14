@@ -189,6 +189,8 @@
             overflow-x: auto;
             overflow-y: hidden;
             padding: 5px;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-x: contain;
         }
 
         /* Estilizar scrollbar */
@@ -219,21 +221,21 @@
             overflow: hidden;
             cursor: pointer;
             border: 2px solid transparent;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: transform 120ms ease-out, border-color 0s;
+            will-change: transform;
+            transform: translateZ(0);
         }
 
         .thumbnail:hover:not(.active) {
             border-color: #0055A2;
-            transform: scale(1.08);
-            box-shadow: 0 4px 12px rgba(0, 85, 162, 0.2);
+            transform: translateZ(0) scale(1.06);
         }
 
         .thumbnail.active {
             border-color: #003d75 !important;
-            box-shadow: 0 0 0 3px rgba(0, 61, 117, 0.3) !important;
-            transform: scale(1.05) !important;
-            transition: none !important;
+            outline: 2px solid rgba(0, 61, 117, 0.25);
+            outline-offset: 2px;
+            transform: translateZ(0) scale(1.03) !important;
         }
 
         .thumbnail img {
@@ -396,25 +398,49 @@
         let currentIndex = 0;
         const totalImages = images.length;
 
-        function updateImage() {
-            // Atualizar thumbnails primeiro (operação mais leve)
-            const thumbnails = document.querySelectorAll('.thumbnail');
-            thumbnails.forEach((thumb, index) => {
-                thumb.classList.toggle('active', index === currentIndex);
+        const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+        const thumbnails = thumbnailsContainer
+            ? Array.from(thumbnailsContainer.querySelectorAll('.thumbnail'))
+            : [];
+        let activeThumbIndex = 0;
+
+        function setActiveThumbnail(index) {
+            if (!thumbnails.length) return;
+            if (activeThumbIndex === index) return;
+
+            const prev = thumbnails[activeThumbIndex];
+            const next = thumbnails[index];
+            if (prev) prev.classList.remove('active');
+            if (next) next.classList.add('active');
+            activeThumbIndex = index;
+        }
+
+        function ensureActiveThumbnailVisible(index) {
+            if (!thumbnailsContainer || !thumbnails.length) return;
+            const thumb = thumbnails[index];
+            if (!thumb) return;
+
+            requestAnimationFrame(() => {
+                const containerRect = thumbnailsContainer.getBoundingClientRect();
+                const thumbRect = thumb.getBoundingClientRect();
+
+                const padding = 8;
+                const isVisible =
+                    thumbRect.left >= (containerRect.left + padding) &&
+                    thumbRect.right <= (containerRect.right - padding);
+
+                if (isVisible) return;
+
+                const containerCenter = containerRect.left + (containerRect.width / 2);
+                const thumbCenter = thumbRect.left + (thumbRect.width / 2);
+                thumbnailsContainer.scrollLeft += (thumbCenter - containerCenter);
             });
+        }
 
-            // Scroll automático instantâneo
-            const activeThumbnail = thumbnails[currentIndex];
-            if (activeThumbnail) {
-                const container = activeThumbnail.parentElement;
-                const thumbLeft = activeThumbnail.offsetLeft;
-                const thumbWidth = activeThumbnail.offsetWidth;
-                const containerWidth = container.clientWidth;
-                const scrollPosition = thumbLeft - (containerWidth / 2) + (thumbWidth / 2);
-
-                // Scroll direto sem animação
-                container.scrollLeft = scrollPosition;
-            }
+        function updateImage() {
+            // Atualizar apenas o thumbnail anterior e o atual (evita travar com muitos itens)
+            setActiveThumbnail(currentIndex);
+            ensureActiveThumbnailVisible(currentIndex);
 
             // Atualizar imagem e informações
             document.getElementById('resultImage').src = images[currentIndex].url;
