@@ -5,12 +5,10 @@
     <meta charset="UTF-8">
     <title>UFSM — Resultado da análise</title>
 
-    <!-- Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Roboto:wght@300;400;500;700&display=swap"
         rel="stylesheet">
 
-    <!-- Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
 
     <!-- Common Styles -->
@@ -193,7 +191,6 @@
             overscroll-behavior-x: contain;
         }
 
-        /* Estilizar scrollbar */
         .thumbnails-container::-webkit-scrollbar {
             height: 6px;
         }
@@ -301,7 +298,6 @@
     <div class="container">
         <div class="result-container">
 
-            <!-- Header -->
             <div class="page-header">
                 <div class="page-title-section">
                     <h1 class="page-title">Resultados da Análise</h1>
@@ -330,22 +326,19 @@
                 </div>
             </div>
 
-            <!-- Main Content -->
             <div class="main-content">
 
-                <!-- Thumbnails -->
                 <div class="thumbnails-section">
                     <div class="thumbnails-container" id="thumbnailsContainer">
                         {% for upload in uploads %}
                         <div class="thumbnail {% if forloop.first %}active{% endif %}"
-                            onclick="showImage({{ forloop.counter0 }})" data-index="{{ forloop.counter0 }}">
+                            onclick="showImage({{ forloop.counter0 }})">
                             <img src="{{ upload.result.url }}" alt="Miniatura {{ forloop.counter }}">
                         </div>
                         {% endfor %}
                     </div>
                 </div>
 
-                <!-- Image Viewer -->
                 <div class="image-viewer">
                     <div class="image-info" id="imageInfo">
                         {{ uploads.0.original.name }}
@@ -448,16 +441,13 @@
         }
 
         function updateImage() {
-            // Atualizar apenas o thumbnail anterior e o atual (evita travar com muitos itens)
             setActiveThumbnail(currentIndex);
             ensureActiveThumbnailVisible(currentIndex);
 
-            // Atualizar imagem e informações
             resultImageEl.src = images[currentIndex].url;
             imageInfoEl.textContent = formatOriginalName(images[currentIndex].originalName);
             imageCounterEl.textContent = `${currentIndex + 1} / ${totalImages}`;
 
-            // Atualizar botões
             prevBtnEl.disabled = currentIndex === 0;
             nextBtnEl.disabled = currentIndex === totalImages - 1;
         }
@@ -481,13 +471,11 @@
             }
         }
 
-        // Atalhos de teclado
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') prevImage();
             if (e.key === 'ArrowRight') nextImage();
         });
 
-        // Inicializar
         updateImage();
     </script>
 

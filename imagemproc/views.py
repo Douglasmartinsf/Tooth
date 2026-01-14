@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import zipfile
-import os
 from io import BytesIO
 from django.shortcuts import render, get_object_or_404
 from django.core.files.base import ContentFile
@@ -10,7 +9,7 @@ from django.http import JsonResponse, HttpResponse
 from .forms import ImageUploadForm
 from .models import Upload, UploadBatch
 from .predict_unet import main
-from .constants import VALID_IMAGE_EXTENSIONS, MAX_FILE_SIZE_MB, MAX_IMAGES_PER_BATCH
+from .constants import VALID_IMAGE_EXTENSIONS, MAX_FILE_SIZE_MB, MAX_IMAGES_PER_BATCH, UPLOAD_CARD_EXPAND_THRESHOLD
 
 
 @login_required
@@ -25,6 +24,7 @@ def _upload_template_context(form):
         'valid_extensions': VALID_IMAGE_EXTENSIONS,
         'max_file_size_mb': MAX_FILE_SIZE_MB,
         'max_images_per_batch': MAX_IMAGES_PER_BATCH,
+        'expand_threshold': UPLOAD_CARD_EXPAND_THRESHOLD,
     }
 
 
