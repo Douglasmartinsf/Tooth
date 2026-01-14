@@ -386,6 +386,12 @@
     </footer>
 
     <script>
+        const resultImageEl = document.getElementById('resultImage');
+        const imageInfoEl = document.getElementById('imageInfo');
+        const imageCounterEl = document.getElementById('imageCounter');
+        const prevBtnEl = document.getElementById('prevBtn');
+        const nextBtnEl = document.getElementById('nextBtn');
+
         const images = [
             {% for upload in uploads %}
         {
@@ -397,6 +403,10 @@
 
         let currentIndex = 0;
         const totalImages = images.length;
+
+        function formatOriginalName(name) {
+            return (name || '').replace(/^originals\//, '');
+        }
 
         const thumbnailsContainer = document.getElementById('thumbnailsContainer');
         const thumbnails = thumbnailsContainer
@@ -443,14 +453,13 @@
             ensureActiveThumbnailVisible(currentIndex);
 
             // Atualizar imagem e informações
-            document.getElementById('resultImage').src = images[currentIndex].url;
-            const fileName = images[currentIndex].originalName.replace(/^originals\//, '');
-            document.getElementById('imageInfo').textContent = fileName;
-            document.getElementById('imageCounter').textContent = `${currentIndex + 1} / ${totalImages}`;
+            resultImageEl.src = images[currentIndex].url;
+            imageInfoEl.textContent = formatOriginalName(images[currentIndex].originalName);
+            imageCounterEl.textContent = `${currentIndex + 1} / ${totalImages}`;
 
             // Atualizar botões
-            document.getElementById('prevBtn').disabled = currentIndex === 0;
-            document.getElementById('nextBtn').disabled = currentIndex === totalImages - 1;
+            prevBtnEl.disabled = currentIndex === 0;
+            nextBtnEl.disabled = currentIndex === totalImages - 1;
         }
 
         function showImage(index) {

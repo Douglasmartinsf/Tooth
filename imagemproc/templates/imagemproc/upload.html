@@ -365,7 +365,8 @@
                                         <line x1="12" y1="3" x2="12" y2="15"></line>
                                     </svg>
                                     <div class="file-upload-text">Clique para selecionar imagens</div>
-                                    <div class="file-upload-hint">ou arraste e solte aqui • Até 50 imagens</div>
+                                    <div class="file-upload-hint">ou arraste e solte aqui • Até {{ max_images_per_batch
+                                        }} imagens</div>
                                 </div>
                                 <div id="imagesPreviewContainer" class="images-preview-container"></div>
                                 <div class="file-name-display" id="fileNameDisplay"></div>
@@ -389,6 +390,8 @@
                         const changeFileText = document.getElementById('changeFileText');
                         const uploadForm = document.getElementById('uploadForm');
                         const fileError = document.getElementById('fileError');
+                        const trashIconBtn = document.getElementById('trashIconBtn');
+                        const cardColumn = document.getElementById('cardColumn');
 
                         const validExtensions = {{ valid_extensions| safe }};
                         const maxFileSize = {{ max_file_size_mb }} * 1024 * 1024;
@@ -396,6 +399,10 @@
 
                         // Array para armazenar os arquivos selecionados
                         let selectedFiles = [];
+
+                        function selectedFilesLabel() {
+                            return `📷 ${selectedFiles.length} ${selectedFiles.length > 1 ? 'imagens selecionadas' : 'imagem selecionada'}`;
+                        }
 
                         function showError(message) {
                             fileError.textContent = '⚠️ ' + message;
@@ -494,6 +501,7 @@
                         function removeFile(index, event) {
                             if (event) {
                                 event.stopPropagation(); // Evitar que o clique acione o label
+                                event.preventDefault();
                             }
 
                             // Remover arquivo do array
@@ -525,23 +533,25 @@
                         }
 
                         function updateCountersAndButtons() {
-                            const trashIconBtn = document.getElementById('trashIconBtn');
-
                             if (selectedFiles.length === 0) {
                                 imagesPreviewContainer.classList.remove('show');
                                 fileNameDisplay.classList.remove('show');
                                 changeFileText.classList.remove('show');
                                 uploadLabel.classList.remove('has-file');
                                 trashIconBtn.classList.remove('show');
-                                document.getElementById('cardColumn').classList.remove('expanded');
+                                cardColumn.classList.remove('expanded');
                             } else {
-                                fileNameDisplay.textContent = `📷 ${selectedFiles.length} ${selectedFiles.length > 1 ? 'imagens selecionadas' : 'imagem selecionada'}`;
+                                fileNameDisplay.textContent = selectedFilesLabel();
+                                fileNameDisplay.classList.add('show');
+                                changeFileText.classList.add('show');
+                                uploadLabel.classList.add('has-file');
+                                trashIconBtn.classList.add('show');
 
                                 // Expandir card se houver mais de 6 imagens
                                 if (selectedFiles.length > 6) {
-                                    document.getElementById('cardColumn').classList.add('expanded');
+                                    cardColumn.classList.add('expanded');
                                 } else {
-                                    document.getElementById('cardColumn').classList.remove('expanded');
+                                    cardColumn.classList.remove('expanded');
                                 }
                             }
                         }
@@ -553,7 +563,6 @@
                         }
 
                         function updatePreviews() {
-                            const trashIconBtn = document.getElementById('trashIconBtn');
                             imagesPreviewContainer.innerHTML = '';
 
                             if (selectedFiles.length === 0) {
@@ -562,7 +571,7 @@
                                 changeFileText.classList.remove('show');
                                 uploadLabel.classList.remove('has-file');
                                 trashIconBtn.classList.remove('show');
-                                document.getElementById('cardColumn').classList.remove('expanded');
+                                cardColumn.classList.remove('expanded');
                                 return;
                             }
 
@@ -598,7 +607,7 @@
                             });
 
                             imagesPreviewContainer.classList.add('show');
-                            fileNameDisplay.textContent = `📷 ${selectedFiles.length} ${selectedFiles.length > 1 ? 'imagens selecionadas' : 'imagem selecionada'}`;
+                            fileNameDisplay.textContent = selectedFilesLabel();
                             fileNameDisplay.classList.add('show');
                             changeFileText.textContent = '✔️ Imagens carregadas • Clique para adicionar mais';
                             changeFileText.classList.add('show');
@@ -607,9 +616,9 @@
 
                             // Expandir card se houver mais de 6 imagens
                             if (selectedFiles.length > 6) {
-                                document.getElementById('cardColumn').classList.add('expanded');
+                                cardColumn.classList.add('expanded');
                             } else {
-                                document.getElementById('cardColumn').classList.remove('expanded');
+                                cardColumn.classList.remove('expanded');
                             }
                         }
 
@@ -635,7 +644,7 @@
                         });
 
                         // Botão limpar todas as imagens
-                        document.getElementById('trashIconBtn').addEventListener('click', function (e) {
+                        trashIconBtn.addEventListener('click', function (e) {
                             e.stopPropagation();
                             e.preventDefault();
                             clearAllFiles();
@@ -669,7 +678,6 @@
                             resetUploadStyle();
 
                             if (e.dataTransfer.files.length) {
-                                fileInput.files = e.dataTransfer.files;
                                 handleFilesSelect(e.dataTransfer.files);
                             }
                         });

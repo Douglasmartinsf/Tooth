@@ -19,16 +19,19 @@ def home(request):
     return render(request, 'imagemproc/home.html')
 
 
-def _render_upload_error(request, form, error_message):
-    """Helper para renderizar upload com erro"""
-    form.add_error('images', error_message)
-    context = {
+def _upload_template_context(form):
+    return {
         'form': form,
         'valid_extensions': VALID_IMAGE_EXTENSIONS,
         'max_file_size_mb': MAX_FILE_SIZE_MB,
         'max_images_per_batch': MAX_IMAGES_PER_BATCH,
     }
-    return render(request, 'imagemproc/upload.html', context)
+
+
+def _render_upload_error(request, form, error_message):
+    """Helper para renderizar upload com erro"""
+    form.add_error('images', error_message)
+    return render(request, 'imagemproc/upload.html', _upload_template_context(form))
 
 
 @login_required
@@ -72,13 +75,7 @@ def upload_and_process_save(request):
     else:
         form = ImageUploadForm()
 
-    context = {
-        'form': form,
-        'valid_extensions': VALID_IMAGE_EXTENSIONS,
-        'max_file_size_mb': MAX_FILE_SIZE_MB,
-        'max_images_per_batch': MAX_IMAGES_PER_BATCH,
-    }
-    return render(request, 'imagemproc/upload.html', context)
+    return render(request, 'imagemproc/upload.html', _upload_template_context(form))
 
 
 @login_required
