@@ -52,17 +52,10 @@ def upload_and_process_save(request):
                     processed_images=0
                 )
 
-                # Salvar IDs das imagens na sessão
                 request.session['batch_id'] = str(batch.batch_id)
-                request.session['total_images'] = len(images)
 
-                # Salvar todas as imagens sem processar ainda
-                upload_ids = []
                 for uploaded in images:
-                    obj = Upload.objects.create(original=uploaded, batch=batch)
-                    upload_ids.append(obj.id)
-
-                request.session['upload_ids'] = upload_ids
+                    Upload.objects.create(original=uploaded, batch=batch)
 
                 # Redirecionar para página de processamento
                 return render(request, 'imagemproc/processing.html', {
@@ -91,10 +84,6 @@ def process_batch(request, batch_id):
                 upload.original.seek(0)
                 file_bytes = upload.original.read()
                 np_bytes = np.frombuffer(file_bytes, dtype=np.uint8)
-
-                test_img = cv2.imdecode(np_bytes, cv2.IMREAD_COLOR)
-                if test_img is None:
-                    continue
 
                 outimage = main(np_bytes)
 
