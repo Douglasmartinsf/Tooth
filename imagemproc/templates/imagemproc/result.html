@@ -107,6 +107,18 @@
             border-radius: 8px;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
             object-fit: contain;
+            transform: scale(1);
+            transform-origin: center center;
+            transition: transform 120ms ease;
+            will-change: transform;
+            user-select: none;
+            touch-action: none;
+            -webkit-user-drag: none;
+            cursor: zoom-in;
+        }
+
+        .result-img.no-transition {
+            transition: none !important;
         }
 
         .nav-button {
@@ -169,6 +181,38 @@
             max-width: 90%;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
             z-index: 5;
+        }
+
+        .zoom-controls {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: flex;
+            gap: 8px;
+            z-index: 11;
+        }
+
+        .zoom-button {
+            background: rgba(255, 255, 255, 0.95);
+            color: #003366;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+
+        .zoom-button:hover {
+            background: #ffffff;
+            color: #0055A2;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 85, 162, 0.2);
         }
 
         .thumbnails-section {
@@ -339,9 +383,15 @@
                     </div>
                 </div>
 
-                <div class="image-viewer">
+                <div class="image-viewer" id="imageViewer">
                     <div class="image-info" id="imageInfo">
                         {{ uploads.0.original.name }}
+                    </div>
+
+                    <div class="zoom-controls">
+                        <button class="zoom-button" id="zoomOutBtn" type="button" aria-label="Reduzir zoom">−</button>
+                        <button class="zoom-button" id="zoomResetBtn" type="button" aria-label="Resetar zoom">⤾</button>
+                        <button class="zoom-button" id="zoomInBtn" type="button" aria-label="Aumentar zoom">+</button>
                     </div>
 
                     <button class="nav-button prev" id="prevBtn" onclick="prevImage()">
@@ -351,7 +401,8 @@
                         </svg>
                     </button>
 
-                    <img id="resultImage" class="result-img" src="{{ uploads.0.result.url }}" alt="Imagem Processada">
+                    <img id="resultImage" class="result-img" src="{{ uploads.0.result.url }}" alt="Imagem Processada"
+                        draggable="false">
 
                     <button class="nav-button next" id="nextBtn" onclick="nextImage()">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -380,10 +431,14 @@
 
     <script>
         const resultImageEl = document.getElementById('resultImage');
+        const imageViewerEl = document.getElementById('imageViewer');
         const imageInfoEl = document.getElementById('imageInfo');
         const imageCounterEl = document.getElementById('imageCounter');
         const prevBtnEl = document.getElementById('prevBtn');
         const nextBtnEl = document.getElementById('nextBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+        const zoomResetBtn = document.getElementById('zoomResetBtn');
 
         const images = [
             {% for upload in uploads %}
@@ -396,6 +451,205 @@
 
         let currentIndex = 0;
         const totalImages = images.length;
+
+        const zoomMin = 1;
+        const zoomMax = 3;
+        const zoomStep = 0.2;
+        const clickZoom = 2.4;
+        let zoomLevel = 1;
+        let panX = 0;
+        let panY = 0;
+        let isPanning = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let lastPanX = 0;
+        let lastPanY = 0;
+        let didDrag = false;
+        let baseWidth = 0;
+        let baseHeight = 0;
+        let zoomOriginX = 0;
+        let zoomOriginY = 0;
+        let containerContentWidth = 0;
+        let containerContentHeight = 0;
+        let wheelTransitionTimeout = null;
+
+        function clampNumber(value, min, max) {
+            return Math.min(max, Math.max(min, value));
+        }
+
+        function disableTransitionTemporarily() {
+            resultImageEl.classList.add('no-transition');
+            if (wheelTransitionTimeout) {
+                clearTimeout(wheelTransitionTimeout);
+            }
+            wheelTransitionTimeout = setTimeout(() => {
+                // Não reabilita no meio de um drag
+                if (!isPanning) {
+                    resultImageEl.classList.remove('no-transition');
+                }
+            }, 140);
+        }
+
+        function updateBaseSize() {
+            if (!imageViewerEl || !resultImageEl) return;
+            const prevBaseWidth = baseWidth;
+            const prevBaseHeight = baseHeight;
+
+            const { contentWidth, contentHeight } = getViewerContentMetrics();
+            containerContentWidth = contentWidth;
+            containerContentHeight = contentHeight;
+
+            // Use o tamanho real renderizado (layout), sem influência do transform.
+            // Isso evita limites errados quando a imagem tem aspect ratio que deixa
+            // "sobras" no container (ex.: panorâmica muito larga).
+            baseWidth = resultImageEl.offsetWidth;
+            baseHeight = resultImageEl.offsetHeight;
+            if (!baseWidth || !baseHeight) {
+                const rect = resultImageEl.getBoundingClientRect();
+                baseWidth = rect.width;
+                baseHeight = rect.height;
+            }
+
+            // Mantém o ponto de zoom proporcionalmente ao novo tamanho (resize/troca de imagem)
+            if (zoomLevel <= 1 || !prevBaseWidth || !prevBaseHeight) {
+                zoomOriginX = baseWidth / 2;
+                zoomOriginY = baseHeight / 2;
+            } else {
+                zoomOriginX = (zoomOriginX / prevBaseWidth) * baseWidth;
+                zoomOriginY = (zoomOriginY / prevBaseHeight) * baseHeight;
+            }
+        }
+
+        function clampPan() {
+            if (!imageViewerEl) return;
+
+            const scaledWidth = baseWidth * zoomLevel;
+            const scaledHeight = baseHeight * zoomLevel;
+
+            // Pan em pixels de tela.
+            const maxPanX = Math.max(0, (scaledWidth - containerContentWidth) / 2);
+            const maxPanY = Math.max(0, (scaledHeight - containerContentHeight) / 2);
+
+            panX = clampNumber(panX, -maxPanX, maxPanX);
+            panY = clampNumber(panY, -maxPanY, maxPanY);
+        }
+
+        function applyZoom() {
+            clampPan();
+            resultImageEl.style.transformOrigin = `${zoomOriginX}px ${zoomOriginY}px`;
+            // Ordem importa: translate(...) scale(...) => escala primeiro, translada depois (pan não escala)
+            resultImageEl.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+            if (zoomLevel > 1) {
+                resultImageEl.style.cursor = isPanning ? 'grabbing' : 'grab';
+            } else {
+                resultImageEl.style.cursor = 'zoom-in';
+            }
+        }
+
+        function setZoom(value) {
+            zoomLevel = clampNumber(value, zoomMin, zoomMax);
+            if (zoomLevel === 1) {
+                panX = 0;
+                panY = 0;
+                zoomOriginX = baseWidth / 2;
+                zoomOriginY = baseHeight / 2;
+            }
+            applyZoom();
+        }
+
+        function getViewerContentMetrics() {
+            const viewerRect = imageViewerEl.getBoundingClientRect();
+            const styles = window.getComputedStyle(imageViewerEl);
+            const paddingLeft = parseFloat(styles.paddingLeft) || 0;
+            const paddingTop = parseFloat(styles.paddingTop) || 0;
+            const paddingRight = parseFloat(styles.paddingRight) || 0;
+            const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+
+            const contentLeft = viewerRect.left + paddingLeft;
+            const contentTop = viewerRect.top + paddingTop;
+            const contentWidth = imageViewerEl.clientWidth - (paddingLeft + paddingRight);
+            const contentHeight = imageViewerEl.clientHeight - (paddingTop + paddingBottom);
+            return { contentLeft, contentTop, contentWidth, contentHeight };
+        }
+
+        function zoomAtPointer(e, targetZoom, opts = {}) {
+            const { disableTransition = false } = opts;
+            if (disableTransition) {
+                disableTransitionTemporarily();
+            }
+            updateBaseSize();
+
+            const { contentLeft, contentTop, contentWidth, contentHeight } = getViewerContentMetrics();
+            containerContentWidth = contentWidth;
+            containerContentHeight = contentHeight;
+
+            const mx = e.clientX - contentLeft;
+            const my = e.clientY - contentTop;
+
+            const baseLeft = (containerContentWidth - baseWidth) / 2;
+            const baseTop = (containerContentHeight - baseHeight) / 2;
+
+            // Inversão correta do transform com origin:
+            // S = base + pan + zoom*p + (1-zoom)*origin
+            // => p = (S - base - pan - (1-zoom)*origin) / zoom
+            const currentZoom = zoomLevel;
+            const originShiftX = (1 - currentZoom) * zoomOriginX;
+            const originShiftY = (1 - currentZoom) * zoomOriginY;
+
+            const imgX = (mx - baseLeft - panX - originShiftX) / currentZoom;
+            const imgY = (my - baseTop - panY - originShiftY) / currentZoom;
+
+            zoomOriginX = clampNumber(imgX, 0, baseWidth);
+            zoomOriginY = clampNumber(imgY, 0, baseHeight);
+
+            zoomLevel = clampNumber(targetZoom, zoomMin, zoomMax);
+
+            // Ajusta o pan para manter o ponto sob o mouse “travado” durante o zoom
+            // Quando origin == ponto sob o mouse, o ponto fica em: base + pan + origin
+            // então pan = mouse - base - origin
+            panX = mx - baseLeft - zoomOriginX;
+            panY = my - baseTop - zoomOriginY;
+
+            if (zoomLevel === 1) {
+                panX = 0;
+                panY = 0;
+                zoomOriginX = baseWidth / 2;
+                zoomOriginY = baseHeight / 2;
+            }
+
+            applyZoom();
+        }
+
+        function startPan(clientX, clientY) {
+            if (zoomLevel <= 1) return;
+            isPanning = true;
+            didDrag = false;
+            dragStartX = clientX;
+            dragStartY = clientY;
+            lastPanX = panX;
+            lastPanY = panY;
+            resultImageEl.classList.add('no-transition');
+            applyZoom();
+        }
+
+        function movePan(clientX, clientY) {
+            if (!isPanning) return;
+            const deltaX = clientX - dragStartX;
+            const deltaY = clientY - dragStartY;
+            if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+                didDrag = true;
+            }
+            panX = lastPanX + deltaX;
+            panY = lastPanY + deltaY;
+            applyZoom();
+        }
+
+        function endPan() {
+            if (!isPanning) return;
+            isPanning = false;
+            resultImageEl.classList.remove('no-transition');
+            applyZoom();
+        }
 
         function formatOriginalName(name) {
             return (name || '').replace(/^originals\//, '');
@@ -448,6 +702,14 @@
             imageInfoEl.textContent = formatOriginalName(images[currentIndex].originalName);
             imageCounterEl.textContent = `${currentIndex + 1} / ${totalImages}`;
 
+            zoomLevel = 1;
+            panX = 0;
+            panY = 0;
+            requestAnimationFrame(() => {
+                updateBaseSize();
+                applyZoom();
+            });
+
             prevBtnEl.disabled = currentIndex === 0;
             nextBtnEl.disabled = currentIndex === totalImages - 1;
         }
@@ -476,7 +738,64 @@
             if (e.key === 'ArrowRight') nextImage();
         });
 
+        zoomInBtn.addEventListener('click', () => setZoom(zoomLevel + zoomStep));
+        zoomOutBtn.addEventListener('click', () => setZoom(zoomLevel - zoomStep));
+        zoomResetBtn.addEventListener('click', () => setZoom(1));
+
+        resultImageEl.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const direction = e.deltaY > 0 ? -1 : 1;
+            zoomAtPointer(e, zoomLevel + (direction * zoomStep), { disableTransition: true });
+        }, { passive: false });
+
+        resultImageEl.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            resultImageEl.setPointerCapture(e.pointerId);
+            startPan(e.clientX, e.clientY);
+        });
+
+        resultImageEl.addEventListener('pointermove', (e) => {
+            movePan(e.clientX, e.clientY);
+        });
+
+        resultImageEl.addEventListener('pointerup', () => {
+            endPan();
+        });
+
+        resultImageEl.addEventListener('pointercancel', () => {
+            endPan();
+        });
+
+        resultImageEl.addEventListener('click', (e) => {
+            if (didDrag) {
+                didDrag = false;
+                return;
+            }
+
+            if (zoomLevel === 1) {
+                // Clique deve manter a animação (comportamento anterior)
+                if (wheelTransitionTimeout) {
+                    clearTimeout(wheelTransitionTimeout);
+                    wheelTransitionTimeout = null;
+                }
+                resultImageEl.classList.remove('no-transition');
+                zoomAtPointer(e, clickZoom);
+            } else {
+                setZoom(1);
+            }
+        });
+
         updateImage();
+
+        resultImageEl.addEventListener('load', () => {
+            updateBaseSize();
+            applyZoom();
+        });
+
+        window.addEventListener('resize', () => {
+            updateBaseSize();
+            applyZoom();
+        });
     </script>
 
 </body>
