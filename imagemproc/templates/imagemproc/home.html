@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load static %}
 <html lang="pt-br">
 
 <head>
@@ -279,7 +280,8 @@
                 <h3>Exemplo de Resultado</h3>
                 <p class="demo-caption">O sistema identifica e segmenta automaticamente os dentes na radiografia
                     panorâmica</p>
-                <img src="/media/results/result_1.png" alt="Exemplo de resultado da segmentação" class="demo-image">
+                <img src="{% static 'img/home_result_exemplo.png' %}" alt="Exemplo de resultado da segmentação"
+                    class="demo-image">
             </div>
         </div>
 
